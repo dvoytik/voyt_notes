@@ -26,8 +26,27 @@ ls -l arch/riscv/boot/Image
 -rwxr-xr-x 1 voyt voyt 22M Nov  5 23:39 arch/riscv/boot/Image*
 ```
 
-Kernel image header
--------------------
+Busybox root FS
+---------------
+**TODO**: use build root. 
+**TODO**: combine initramfs with kernel in one image
+
+OpenSBI
+-------
+
+How to build OpenSBI firmware with Linux Kernel as Payload (FW_PAYLOAD):
+```
+cd ~/p
+git clone https://github.com/riscv-software-src/opensbi
+export CROSS_COMPILE=riscv64-unknown-linux-gnu-
+make PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
+ls -l build/platform/generic/firmware/fw_payload.bin
+```
+
+[references](riscv_boot.md)
+
+For reference - Kernel image header
+-----------------------------------
 
 [Image header format](https://www.kernel.org/doc/Documentation/riscv/boot-image-header.rst):
 ```c
@@ -56,10 +75,10 @@ Kernel image header
 00000070  00 00 00 00 00 00 00 00  00 10 00 00 00 02 00 00  |................|
 00000080
 ```
+First two bytes are replaced with `MZ` (0x4d 0x5a) magic string to support EFI
+[Portable Executable](https://en.wikipedia.org/wiki/Portable_Executable) stub.
 
 ```
-code0       = 4d 5a 6f 10 = 0x106f_5a4d
-code1       = e0 0c 01 00 = 0x0001_0ce0
 text_offset = 00 00 20 00 00 00 00 00 = 0x0020_0000 =  2 097 152 Bytes =  2 048 KiB
-image_sie   = 00 b0 57 01 00 00 00 00 = 0x0154_b000 = 22 327 296 Bytes = 21 804 KiB
+image_size   = 00 b0 57 01 00 00 00 00 = 0x0154_b000 = 22 327 296 Bytes = 21 804 KiB
 ```
