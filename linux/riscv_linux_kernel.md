@@ -8,7 +8,7 @@ sudo pacman -S bc
 
 Download the source code:
 ```
-KERNEL_VER=v6.6.7
+KERNEL_VER=v6.7
 git clone --depth 1 --branch ${KERNEL_VER} https://github.com/torvalds/linux.git linux
 cd linux
 ```
@@ -37,7 +37,8 @@ OpenSBI
 How to build OpenSBI firmware with Linux Kernel as Payload (FW_PAYLOAD):
 ```
 cd ~/p
-git clone https://github.com/riscv-software-src/opensbi
+git clone --depth 1 https://github.com/riscv-software-src/opensbi
+cd opensbi
 export CROSS_COMPILE=riscv64-unknown-linux-gnu-
 make PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
 ls -l build/platform/generic/firmware/fw_payload.bin
