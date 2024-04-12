@@ -1,0 +1,77 @@
+; vi: ft=asm
+
+; based on: https://github.com/riscv-software-src/opensbi
+; license: https://github.com/riscv-software-src/opensbi/blob/master/COPYING.BSD
+
+; files:
+; fw_payload.dep
+; firmware/fw_base.S
+; firmware/fw_payload.S
+; riscv_asm.h
+
+; firmware/fw_base.S
+.macro	MOV_3R __d0, __s0, __d1, __s1, __d2, __s2
+	add	\__d0, \__s0, zero
+	add	\__d1, \__s1, zero
+	add	\__d2, \__s2, zero
+.endm
+
+;	REG_S	t1, 0(t0) === sd t1, 0(t0)
+_start:
+	/* Find preferred boot HART id */
+	MOV_3R	s0, a0, s1, a1, s2, a2
+	call	fw_boot_hart
+	add	a6, a0, zero
+	MOV_3R	a0, s0, a1, s1, a2, s2
+	li	a7, -1
+	beq	a6, a7, _try_lottery # 22:
+	/* Jump to relocation wait loop if we are not boot hart */
+	bne	a0, a6, _wait_relocate_copy_done
+_try_lottery:
+	/* Jump to relocation wait loop if we don't get relocation lottery */
+	lla	a6, _relocate_lottery # 2a: a6 <= 8004_0000
+	li	a7, 1 # 32: 
+	amoadd.w a6, a7, (a6) # a6 <= 0000 ?
+	bnez	a6, _wait_relocate_copy_done # a6 != 0 then jump 800000096 (doesn't jump)
+
+	/* Save load address */
+	lla	t0, _load_start # t0 <= 8004_0010
+	lla	t1, _fw_start # t1 <= 800_0000 ?
+	REG_S	t1, 0(t0) # 4c: sd t1, 0(t0)
+
+#ifdef FW_PIC
+	/* relocate the global table content */
+	lla	t0, _link_start
+	REG_L	t0, 0(t0)
+	/* t1 shall has the address of _fw_start */
+	sub	t2, t1, t0
+	lla	t0, __rel_dyn_start
+	lla	t1, __rel_dyn_end
+	beq	t0, t1, _relocate_done
+2:
+	REG_L	t5, REGBYTES(t0)	/* t5 <-- relocation info:type */
+	li	t3, R_RISCV_RELATIVE	/* reloc type R_RISCV_RELATIVE */
+	bne	t5, t3, 3f
+	REG_L	t3, 0(t0)
+	REG_L	t5, (REGBYTES * 2)(t0)	/* t5 <-- addend */
+	add	t5, t5, t2
+	add	t3, t3, t2
+	REG_S	t5, 0(t3)		/* store runtime address to the GOT entry */
+
+3:
+	addi	t0, t0, (REGBYTES * 3)
+	blt	t0, t1, 2b
+	j	_relocate_done
+_wait_relocate_copy_done:
+	j	_wait_for_boot_hart
+
+; firmware/fw_payload.S
+	/*
+	 * This function is called very early even before
+	 * fw_save_info() is called.
+	 * We can only use a0, a1, and a2 registers here.
+	 * The boot HART id should be returned in 'a0'.
+	 */
+fw_boot_hart:
+	li	a0, -1
+	ret
