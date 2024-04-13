@@ -41,7 +41,8 @@ git clone --depth 1 https://github.com/riscv-software-src/opensbi
 cd opensbi
 export CROSS_COMPILE=riscv64-unknown-linux-gnu-
 make PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
-ls -l build/platform/generic/firmware/fw_payload.bin
+# make DEBUG=1 PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
+ls -lh build/platform/generic/firmware/fw_payload.bin
 ```
 
 [references](riscv_boot.md)
