@@ -40,8 +40,10 @@ cd ~/p
 git clone --depth 1 https://github.com/riscv-software-src/opensbi
 cd opensbi
 export CROSS_COMPILE=riscv64-unknown-linux-gnu-
-make PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
+# make PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
 # make DEBUG=1 PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image
+make DEBUG=1 PLATFORM=generic FW_PAYLOAD_PATH=$HOME/p/linux/arch/riscv/boot/Image \
+  FW_FDT_PATH=$HOME/p/linux/arch/riscv/boot/dts/sifive/hifive-unleashed-a00.dtb
 ls -lh build/platform/generic/firmware/fw_payload.bin
 ```
 
