@@ -125,7 +125,7 @@ _relocate_done:               ; 98
 
 	/* Reset all registers except ra, a0, a1 and a2 for boot HART */
 	li	ra, 0                 ; aa: c.li x1, 0
-	call	_reset_regs         ; ac: jal 0x8000_04f8
+	call	_reset_regs         ; ac: jal 0x8000_0500
 
 	/* Zero-out BSS */
 	lla	s4, _bss_start        ; b4: x20/a4 = 8004_3000
@@ -133,26 +133,26 @@ _relocate_done:               ; 98
 _bss_zero:
 	REG_S	zero, (s4)               ; c0: sd x0, 0x0(x20)
 	add	s4, s4, __SIZEOF_POINTER__
-	blt	s4, s5, _bss_zero          ; c6: 
+	blt	s4, s5, _bss_zero          ; c6: blt x20, x21, 00c0
 
 	/* Setup temporary trap handler */
-	lla	s4, _start_hang            ; ca: x20/s4 = 8000_03d8
-	csrw	CSR_MTVEC, s4            ; d2: 
+	lla	s4, _start_hang            ; ca: x20/s4 = 8000_03e0
+	csrw	CSR_MTVEC, s4            ; d2: csrrw x0, mtvec, x20
 
 	/* Setup temporary stack */
 	lla	s4, _fw_end                ; da: x20/s4 = 8004_6000
-	li	s5, (SBI_SCRATCH_SIZE * 2) ; de: x21/s5 = x2000 (8KB)
+	li	s5, (SBI_SCRATCH_SIZE * 2) ; de: x21/s5 = 2000 (8KB)
 	add	sp, s4, s5                 ; e0: sp = 8004_8000
 
 	/* Allow main firmware to save info */
 	MOV_5R	s0, a0, s1, a1, s2, a2, s3, a3, s4, a4
-	call	fw_save_info             ; f8: jal x1, 8000_0540
+	call	fw_save_info             ; f8: jal x1, 8000_0548
 	MOV_5R	a0, s0, a1, s1, a2, s2, a3, s3, a4, s4; fc: - 
 
   // load address of embedded DTB binary (FDT)
 #ifdef FW_FDT_PATH
 	/* Override previous arg1 */
-	lla	a1, fw_fdt_bin            ; x11/a1 = 8003_0000
+	lla	a1, fw_fdt_bin            ; 0114: x11/a1 = 8003_0000
 #endif
 
 	/*
@@ -161,7 +161,7 @@ _bss_zero:
 	 * firmware are parameters to this function.
 	 */
 	MOV_5R	s0, a0, s1, a1, s2, a2, s3, a3, s4, a4
-	call	fw_platform_init     ; 124: jal x1, 8000_91fe
+	call	fw_platform_init     ; 124: jal x1, 8000_9206
 	add	t0, a0, zero
 	MOV_5R	a0, s0, a1, s1, a2, s2, a3, s3, a4, s4
 	add	a1, t0, zero
@@ -203,7 +203,7 @@ _bss_zero:
 	.section .entry, "ax", %progbits
 	.align 3
 	.globl _reset_regs
-_reset_regs:            ; 8000_04f8: 
+_reset_regs:            ; 8000_0500:
 
 	/* flush the instruction cache */
 	fence.i
@@ -235,9 +235,9 @@ _reset_regs:            ; 8000_04f8:
 	li t4, 0
 	li t5, 0
 	li t6, 0
-	csrw CSR_MSCRATCH, 0
+	csrw CSR_MSCRATCH, 0 	; 0538: csrrwi x0, mscratch, 0
 
-	ret
+	ret 									; 053e: c.jr x1
 
 	.section .entry, "ax", %progbits
 	.align 3
@@ -249,7 +249,7 @@ _start_hang:           ; 8000_03d8
 	.section .entry, "ax", %progbits
 	.align 3
 	.weak fw_platform_init ; replaced with platform.c impl
-fw_platform_init:
+fw_platform_init:        ; 9206: after here it gets stack
 	add	a0, a1, zero       ; replaced
 	ret                    ; replaced
 
@@ -274,5 +274,5 @@ fw_boot_hart:
 	 * previous booting stage.
 	 * Nothing to be returned here.
 	 */
-fw_save_info:    ; 8000_0540
+fw_save_info:    ; 8000_0548
 	ret
