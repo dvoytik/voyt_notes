@@ -1,10 +1,12 @@
 
 One way sync with rsync
 -----------------------
+```sh
 SSH_PORT=22
 USER=user
 RHOST=192.168.0.2
 rsync -cuhazP --stats -e "ssh -p $SSH_PORT" $USER@$RHOST:/home/$USER/path/ /home/$USER/path/
+```
 
 Sync both ways with unison
 --------------------------
