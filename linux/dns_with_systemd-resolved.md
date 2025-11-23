@@ -19,11 +19,4 @@ resolvectl status
 resolvectl query archlinux.org
 ```
 
-TODO: check:
-```
-ResolveUnicastSingleLabel=yes
-```
-in `/etc/systemd/resolved.conf`
-
-
 Source: https://wiki.archlinux.org/title/Systemd-resolved#DNS
